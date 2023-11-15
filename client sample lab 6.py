@@ -494,12 +494,12 @@ class ImageProc(threading.Thread):
 
     def run(self):
         url = "http://" + self.IP_ADDRESS + ":" + str(self.PORT)
-        stream = urllib.request.urlopen(url)
+        #stream = urllib.request.urlopen(url)
         #ADDED
-        retValue, image = self.cam.read()
+        #retValue, image = self.cam.read()
         while (self.RUNNING):
             sleep(0.1)
-            bytes = b''
+            """bytes = b''
             while self.RUNNING:
                 bytes += stream.read(8192)  # image size is about 40k bytes, so this loops about 5 times
                 a = bytes.find(b'\xff\xd8')
@@ -515,7 +515,8 @@ class ImageProc(threading.Thread):
             img = cv2.imdecode(numpy.frombuffer(jpg, dtype=numpy.uint8), cv2.IMREAD_COLOR)
             # Resize to half size so that image processing is faster
             img = cv2.resize(img, ((int)(len(img[0]) / RESIZE_SCALE), (int)(len(img) / RESIZE_SCALE)))
-
+            """
+            retValue, img = self.cam.read()
             with imageLock:
                 self.latestImg = copy.deepcopy(img)  # Make a copy not a reference
 
