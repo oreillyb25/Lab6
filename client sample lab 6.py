@@ -17,7 +17,7 @@ import copy
 socketLock = threading.Lock()
 imageLock = threading.Lock()
 
-IP_ADDRESS = "192.168.1.106"  # SET THIS TO THE RASPBERRY PI's IP ADDRESS
+IP_ADDRESS = "192.168.1.103"  # SET THIS TO THE RASPBERRY PI's IP ADDRESS
 RESIZE_SCALE = 2  # try a larger value if your computer is running slow.
 ENABLE_ROBOT_CONNECTION = True
 
@@ -489,10 +489,14 @@ class ImageProc(threading.Thread):
         self.backY = 0
         self.backX = 0
         self.radius = -1
+        #ADDED
+        self.cam = cv2.VideoCapture(0)
 
     def run(self):
         url = "http://" + self.IP_ADDRESS + ":" + str(self.PORT)
         stream = urllib.request.urlopen(url)
+        #ADDED
+        retValue, image = self.cam.read()
         while (self.RUNNING):
             sleep(0.1)
             bytes = b''
