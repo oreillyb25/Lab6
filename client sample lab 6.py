@@ -492,7 +492,10 @@ class ImageProc(threading.Thread):
         self.radius = -1
         #ADDED
         self.cam = cv2.VideoCapture(0)
-        self.wasClicked = False
+        self.robotLeft = -1
+        self.robotTop = -1
+        self.robotBottom = -1
+        self.robotRight = -1
 
 
 
@@ -548,21 +551,24 @@ class ImageProc(threading.Thread):
         erodedImage = cv2.erode(bwImage, kernel, iterations=1)
         dilatedImage = cv2.dilate(erodedImage, kernel, iterations=1)
         numlabels, labels, stats, centroids = cv2.connectedComponentsWithStats(dilatedImage)
-        # try:
-        #     self.centerX = int(centroids[1][0])
-        #     self.centerY = int(centroids[1][1])
-        #
-        #     circleImage = cv2.circle(dilatedImage, (self.centerX, self.centerY), int(stats[1, cv2.CC_STAT_WIDTH] / 2),
-        #                              (255, 0, 255), 1)
-        #     self.radius = int(stats[1, cv2.CC_STAT_WIDTH] / 2)
-        # except:
-        #     self.centerX = -1
-        #     self.centerY = -1
-        # self.backX = int(centroids[0][0])
-        # self.backY = int(centroids[0][1])
+        try:
+            self.robotLeft = int(stats[1, cv2.CC_STAT_LEFT])
+            self.robotTop = int(stats[1, cv2.CC_STAT_TOP])
+            self.robotBottom = int(stats[1, cv2.CC_STAT_TOP] + stats[1, cv2.CC_STAT_HEIGHT])
+            self.robotRight = int(stats[1, cv2.CC_STAT_LEFT] + stats[1, cv2.CC_STAT_WIDTH])
+
+
+            cv2.rectangle(self.latestImg,(self.robotLeft, self.robotTop),(self.robotRight, self.robotBottom),(255, 0, 255), 1)
+            self.radius = int(stats[1, cv2.CC_STAT_WIDTH] / 2)
+        except:
+            self.robotTop = -1
+            self.robotLeft = -1
+            self.robotBottom = -1
+            self.robotRight = -1
+        self.backX = int(centroids[0][0])
+        self.backY = int(centroids[0][1])
         with imageLock:
-            if self.wasClicked:
-                cv2.circle(self.latestImg, (self.centerX, self.centerY), 15, (255, 0, 255), 5)
+            cv2.circle(self.latestImg, (self.centerX, self.centerY), 15, (255, 0, 255), 5)
 
         # test with width and height
         # self.backX = stats[0, cv2.CC_STAT_WIDTH]
