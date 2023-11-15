@@ -560,7 +560,7 @@ class ImageProc(threading.Thread):
         # self.backX = int(centroids[0][0])
         # self.backY = int(centroids[0][1])
         with imageLock:
-            cv2.circle(self.latestImg, (self.centerX, self.centerY), 60, (255, 0, 255), 1)
+            cv2.circle(self.latestImg, (self.centerX, self.centerY), 40, (255, 0, 255), 5)
 
         # test with width and height
         # self.backX = stats[0, cv2.CC_STAT_WIDTH]
