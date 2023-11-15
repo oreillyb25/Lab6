@@ -480,11 +480,11 @@ class ImageProc(threading.Thread):
         self.RUNNING = True
         self.latestImg = []
         self.feedback = []
-        self.thresholds = {'low_hue': 166, 'high_hue': 230, 'low_sat': 144, 'high_sat': 255, 'low_val': 0,
-                           'high_val': 22}
+        self.thresholds = {'low_hue': 186, 'high_hue': 278, 'low_sat': 113, 'high_sat': 242, 'low_val': 74,
+                           'high_val': 133}
         self.dict = {"oCone": [166, 230, 144, 255, 0, 22], "gCone": [0, 289, 31, 241, 45, 66],
                      "yCone": [139, 360, 110, 227, 13, 42], "gBall": [108, 280, 0, 181, 63, 105],
-                     "oBall": [121,360,125,255,0,16]}
+                     "oBall": [121,360,125,255,0,16], "bluePaper": [186, 278, 113, 242, 74, 133]}
         self.centerY = -1
         self.centerX = -1
         self.backY = 0
