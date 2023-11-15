@@ -492,6 +492,7 @@ class ImageProc(threading.Thread):
         self.radius = -1
         #ADDED
         self.cam = cv2.VideoCapture(0)
+        self.wasClicked = False
 
 
 
@@ -560,7 +561,8 @@ class ImageProc(threading.Thread):
         # self.backX = int(centroids[0][0])
         # self.backY = int(centroids[0][1])
         with imageLock:
-            cv2.circle(self.latestImg, (self.centerX, self.centerY), 40, (255, 0, 255), 5)
+            if self.wasClicked:
+                cv2.circle(self.latestImg, (self.centerX, self.centerY), 15, (255, 0, 255), 5)
 
         # test with width and height
         # self.backX = stats[0, cv2.CC_STAT_WIDTH]
