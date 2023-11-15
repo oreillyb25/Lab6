@@ -547,18 +547,18 @@ class ImageProc(threading.Thread):
         erodedImage = cv2.erode(bwImage, kernel, iterations=1)
         dilatedImage = cv2.dilate(erodedImage, kernel, iterations=1)
         numlabels, labels, stats, centroids = cv2.connectedComponentsWithStats(dilatedImage)
-        try:
-            self.centerX = int(centroids[1][0])
-            self.centerY = int(centroids[1][1])
-
-            circleImage = cv2.circle(dilatedImage, (self.centerX, self.centerY), int(stats[1, cv2.CC_STAT_WIDTH] / 2),
-                                     (255, 0, 255), 1)
-            self.radius = int(stats[1, cv2.CC_STAT_WIDTH] / 2)
-        except:
-            self.centerX = -1
-            self.centerY = -1
-        self.backX = int(centroids[0][0])
-        self.backY = int(centroids[0][1])
+        # try:
+        #     self.centerX = int(centroids[1][0])
+        #     self.centerY = int(centroids[1][1])
+        #
+        #     circleImage = cv2.circle(dilatedImage, (self.centerX, self.centerY), int(stats[1, cv2.CC_STAT_WIDTH] / 2),
+        #                              (255, 0, 255), 1)
+        #     self.radius = int(stats[1, cv2.CC_STAT_WIDTH] / 2)
+        # except:
+        #     self.centerX = -1
+        #     self.centerY = -1
+        # self.backX = int(centroids[0][0])
+        # self.backY = int(centroids[0][1])
         with imageLock:
             cv2.circle(self.latestImg, (self.centerX, self.centerY), 60, (255, 0, 255), 1)
 
