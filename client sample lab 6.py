@@ -19,7 +19,7 @@ imageLock = threading.Lock()
 
 IP_ADDRESS = "192.168.1.103"  # SET THIS TO THE RASPBERRY PI's IP ADDRESS
 RESIZE_SCALE = 2  # try a larger value if your computer is running slow.
-ENABLE_ROBOT_CONNECTION = True
+ENABLE_ROBOT_CONNECTION = False #change to True to use the robot
 
 
 # You should fill this in with your states
@@ -100,272 +100,273 @@ class StateMachine(threading.Thread):
             video = self.video
             if self.option == 1:
                 if self.STATE == States.LISTEN:
-                    if (video.centerY == -1 or video.centerX == -1):
-                        self.STATE = States.NO
-                    else:
-                        if (video.backY - self.thresh) <= video.centerY and (video.backY + self.thresh) >= video.centerY:
-                            if (video.backX - self.thresh) >= video.centerX:
-                                self.STATE = States.LEFT
-                            if (video.backX + self.thresh) <= video.centerX:
-                                self.STATE = States.RIGHT
-                            else:
-                                self.STATE = States.CENTER
-                                if (self.video.radius > 70):
-                                    self.STATE = States.DONE
-                        elif (video.backY - self.thresh) >= video.centerY:
-                            self.STATE = States.BELOW
-                        elif (video.backY + self.thresh) <= video.centerY:
-                            self.STATE = States.ABOVE
-
-                # TODO: Work here
-                if self.STATE == States.NO:
-                    # spin around and look for it
-                    sleep(3)
-                    self.sock.sendall("a spin_right(100)".encode())
-                    self.sock.recv(128).decode()
-
-                    # pass
-                if self.STATE == States.RIGHT:
-                    # turn right
-                    sleep(0.5)
-                    self.sock.sendall("a spin_right(50)".encode())
-                    self.sock.recv(128).decode()
-                    # pass
-                if self.STATE == States.LEFT:
-                    # turn left
-                    sleep(0.5)
-                    self.sock.sendall("a spin_left(50)".encode())
-                    self.sock.recv(128).decode()
-                    # pass
-                if self.STATE == States.BELOW:
-                    # speed up
-                    self.sock.sendall("a drive_straight(90)".encode())
-                    self.sock.recv(128).decode()
-                    # pass
-                if self.STATE == States.ABOVE:
-                    # woah there tristan...slow down buddy
-                    self.sock.sendall("a drive_straight(20)".encode())
-                    self.sock.recv(128).decode()
-                    # pass
-                if self.STATE == States.CENTER:
-                    # move at normal
-                    self.sock.sendall("a drive_straight(50)".encode())
-                    self.sock.recv(128).decode()
-                if self.STATE == States.DONE:
-                    self.sock.sendall("a drive_straight(0)".encode())
-                    self.sock.recv(128).decode()
-                else:
-                    self.STATE = States.LISTEN
-            elif self.option == 2:
-                if self.STATE == States.LISTEN:
-                    if (video.centerY == -1 or video.centerX == -1):
-                        self.STATE = States.NO
-                    else:
-                        if (self.threshY) <= video.centerY and (self.threshY * 2) >= video.centerY:
-                            if (self.threshX) >= video.centerX:
-                                self.STATE = States.LEFT
-                            elif (self.threshX * 2) <= video.centerX:
-                                self.STATE = States.RIGHT
-                            else:
-                                self.STATE = States.CENTER
-                                if (self.video.radius > 70):
-                                    self.STATE = States.BELOW
-                        elif (self.threshY) <= video.centerY:
-                            if (self.threshX) >= video.centerX:
-                                self.STATE = States.BELOW_LEFT
-                            elif (self.threshX * 2) <= video.centerX:
-                                self.STATE = States.BELOW_RIGHT
-                            else:
-                                self.STATE = States.BELOW
-                        elif (self.threshY * 2) >= video.centerY:
-                            self.STATE = States.ABOVE
-
-                # TODO: Work here
-                print(self.STATE)
-                if self.STATE == States.NO:
-                    # spin around and look for it
-                    if self.direction:
-                        self.sock.sendall("a spin_left(20)".encode())
-                        self.sock.recv(128).decode()
-                    else:
-                        self.sock.sendall("a spin_right(20)".encode())
-                        self.sock.recv(128).decode()
-
-                    # pass
-                if self.STATE == States.RIGHT:
-                    self.sock.sendall("a spin_right(25)".encode())
-                    self.sock.recv(128).decode()
-                if self.STATE == States.LEFT:
-                    self.sock.sendall("a spin_left(25)".encode())
-                    self.sock.recv(128).decode()
-
-                if self.STATE == States.BELOW:
-                    # go left around it (cone is to right)
-                    if (self.direction):
-                        self.sock.sendall("a drive_straight(50)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(3.5)
-                        self.sock.sendall("a drive_direct(100,-100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(1.5)
-                        self.sock.sendall("a drive_direct(50,100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(8)
-                        # self.sock.sendall("a drive_direct(100,-100)".encode())
-                        # self.sock.recv(128).decode()
-                        # sleep(.5)
-                        self.direction = not self.direction
-                    else:
-                        self.sock.sendall("a drive_straight(50)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(3.5)
-                        self.sock.sendall("a drive_direct(-100,100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(1.5)
-                        self.sock.sendall("a drive_direct(100,50)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(8)
-                        # self.sock.sendall("a drive_direct(-100,100)".encode())
-                        # self.sock.recv(128).decode()
-                        # sleep(.5)
-                        self.direction = not self.direction
-
-                if self.STATE == States.ABOVE:
-                    # forward
-                    self.sock.sendall("a drive_straight(50)".encode())
-                    self.sock.recv(128).decode()
-
-                if self.STATE == States.CENTER:
-                    self.sock.sendall("a drive_straight(50)".encode())
-                    self.sock.recv(128).decode()
-                if self.STATE == States.BELOW_RIGHT:
-                    self.sock.sendall("a spin_right(15)".encode())
-                    self.sock.recv(128).decode()
+                    pass
+            #         if (video.centerY == -1 or video.centerX == -1):
+            #             self.STATE = States.NO
+            #         else:
+            #             if (video.backY - self.thresh) <= video.centerY and (video.backY + self.thresh) >= video.centerY:
+            #                 if (video.backX - self.thresh) >= video.centerX:
+            #                     self.STATE = States.LEFT
+            #                 if (video.backX + self.thresh) <= video.centerX:
+            #                     self.STATE = States.RIGHT
+            #                 else:
+            #                     self.STATE = States.CENTER
+            #                     if (self.video.radius > 70):
+            #                         self.STATE = States.DONE
+            #             elif (video.backY - self.thresh) >= video.centerY:
+            #                 self.STATE = States.BELOW
+            #             elif (video.backY + self.thresh) <= video.centerY:
+            #                 self.STATE = States.ABOVE
+            #
+            #     # TODO: Work here
+            #     if self.STATE == States.NO:
+            #         # spin around and look for it
+            #         sleep(3)
+            #         self.sock.sendall("a spin_right(100)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #         # pass
+            #     if self.STATE == States.RIGHT:
+            #         # turn right
+            #         sleep(0.5)
+            #         self.sock.sendall("a spin_right(50)".encode())
+            #         self.sock.recv(128).decode()
+            #         # pass
+            #     if self.STATE == States.LEFT:
+            #         # turn left
+            #         sleep(0.5)
+            #         self.sock.sendall("a spin_left(50)".encode())
+            #         self.sock.recv(128).decode()
+            #         # pass
+            #     if self.STATE == States.BELOW:
+            #         # speed up
+            #         self.sock.sendall("a drive_straight(90)".encode())
+            #         self.sock.recv(128).decode()
+            #         # pass
+            #     if self.STATE == States.ABOVE:
+            #         # woah there tristan...slow down buddy
+            #         self.sock.sendall("a drive_straight(20)".encode())
+            #         self.sock.recv(128).decode()
+            #         # pass
+            #     if self.STATE == States.CENTER:
+            #         # move at normal
+            #         self.sock.sendall("a drive_straight(50)".encode())
+            #         self.sock.recv(128).decode()
+            #     if self.STATE == States.DONE:
+            #         self.sock.sendall("a drive_straight(0)".encode())
+            #         self.sock.recv(128).decode()
+            #     else:
+            #         self.STATE = States.LISTEN
+            # elif self.option == 2:
+            #     if self.STATE == States.LISTEN:
+            #         if (video.centerY == -1 or video.centerX == -1):
+            #             self.STATE = States.NO
+            #         else:
+            #             if (self.threshY) <= video.centerY and (self.threshY * 2) >= video.centerY:
+            #                 if (self.threshX) >= video.centerX:
+            #                     self.STATE = States.LEFT
+            #                 elif (self.threshX * 2) <= video.centerX:
+            #                     self.STATE = States.RIGHT
+            #                 else:
+            #                     self.STATE = States.CENTER
+            #                     if (self.video.radius > 70):
+            #                         self.STATE = States.BELOW
+            #             elif (self.threshY) <= video.centerY:
+            #                 if (self.threshX) >= video.centerX:
+            #                     self.STATE = States.BELOW_LEFT
+            #                 elif (self.threshX * 2) <= video.centerX:
+            #                     self.STATE = States.BELOW_RIGHT
+            #                 else:
+            #                     self.STATE = States.BELOW
+            #             elif (self.threshY * 2) >= video.centerY:
+            #                 self.STATE = States.ABOVE
+            #
+            #     # TODO: Work here
+            #     print(self.STATE)
+            #     if self.STATE == States.NO:
+            #         # spin around and look for it
+            #         if self.direction:
+            #             self.sock.sendall("a spin_left(20)".encode())
+            #             self.sock.recv(128).decode()
+            #         else:
+            #             self.sock.sendall("a spin_right(20)".encode())
+            #             self.sock.recv(128).decode()
+            #
+            #         # pass
+            #     if self.STATE == States.RIGHT:
+            #         self.sock.sendall("a spin_right(25)".encode())
+            #         self.sock.recv(128).decode()
+            #     if self.STATE == States.LEFT:
+            #         self.sock.sendall("a spin_left(25)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #     if self.STATE == States.BELOW:
+            #         # go left around it (cone is to right)
+            #         if (self.direction):
+            #             self.sock.sendall("a drive_straight(50)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(3.5)
+            #             self.sock.sendall("a drive_direct(100,-100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(1.5)
+            #             self.sock.sendall("a drive_direct(50,100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(8)
+            #             # self.sock.sendall("a drive_direct(100,-100)".encode())
+            #             # self.sock.recv(128).decode()
+            #             # sleep(.5)
+            #             self.direction = not self.direction
+            #         else:
+            #             self.sock.sendall("a drive_straight(50)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(3.5)
+            #             self.sock.sendall("a drive_direct(-100,100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(1.5)
+            #             self.sock.sendall("a drive_direct(100,50)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(8)
+            #             # self.sock.sendall("a drive_direct(-100,100)".encode())
+            #             # self.sock.recv(128).decode()
+            #             # sleep(.5)
+            #             self.direction = not self.direction
+            #
+            #     if self.STATE == States.ABOVE:
+            #         # forward
+            #         self.sock.sendall("a drive_straight(50)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #     if self.STATE == States.CENTER:
+            #         self.sock.sendall("a drive_straight(50)".encode())
+            #         self.sock.recv(128).decode()
+            #     if self.STATE == States.BELOW_RIGHT:
+            #         self.sock.sendall("a spin_right(15)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #         # with socketLock:
+            #         #     self.direction = not self.direction
+            #
+            #     if self.STATE == States.BELOW_LEFT:
+            #         self.sock.sendall("a spin_left(15)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #         # with socketLock:
+            #         #     self.direction = not self.direction
+            #
+            #     self.STATE = States.LISTEN
+            # else:
+            #     if self.STATE == States.LISTEN:
+            #         if (video.centerY == -1 or video.centerX == -1):
+            #             self.STATE = States.NO
+            #         else:
+            #             if (self.threshY) <= video.centerY and (self.threshY * 2) >= video.centerY:
+            #                 if (self.threshX) >= video.centerX:
+            #                     self.STATE = States.LEFT
+            #                 elif (self.threshX * 2) <= video.centerX:
+            #                     self.STATE = States.RIGHT
+            #                 else:
+            #                     self.STATE = States.CENTER
+            #                     # print(self.video.radius)
+            #                     if (self.video.radius > 70):
+            #                         self.STATE = States.BELOW
+            #             elif (self.threshY) <= video.centerY:
+            #                 if (self.threshX) >= video.centerX:
+            #                     self.STATE = States.BELOW_LEFT
+            #                 elif (self.threshX * 2) <= video.centerX:
+            #                     self.STATE = States.BELOW_RIGHT
+            #                 else:
+            #                     self.STATE = States.BELOW
+            #             elif (self.threshY * 2) >= video.centerY:
+            #                 self.STATE = States.ABOVE
+            #
+            #     # TODO: Work here
+            #     print(self.STATE)
+            #     if self.STATE == States.NO:
+            #         # spin around and look for it
+            #         if self.direction:
+            #             self.sock.sendall("a spin_right(25)".encode())
+            #             self.sock.recv(128).decode()
+            #         else:
+            #             self.sock.sendall("a spin_left(25)".encode())
+            #             self.sock.recv(128).decode()
+            #
+            #         # pass
+            #     if self.STATE == States.RIGHT:
+            #         self.sock.sendall("a spin_right(20)".encode())
+            #         self.sock.recv(128).decode()
+            #     if self.STATE == States.LEFT:
+            #         self.sock.sendall("a spin_left(20)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #     if self.STATE == States.BELOW:
+            #         # go left around it (cone is to right)
+            #         if (self.begin):
+            #             self.sock.sendall("a drive_straight(50)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(3.5)
+            #             self.sock.sendall("a drive_direct(100,-100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(1.5)
+            #             self.sock.sendall("a drive_direct(60,100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(8.5)
+            #             # self.sock.sendall("a drive_direct(100,-100)".encode())
+            #             # self.sock.recv(128).decode()
+            #             # sleep(.5)
+            #             self.begin = False
+            #             self.direction = not self.direction
+            #         elif (self.direction):
+            #             self.sock.sendall("a drive_straight(50)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(3.5)
+            #             self.sock.sendall("a drive_direct(100,-100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(1.5)
+            #             self.sock.sendall("a drive_direct(100,200)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(16)
+            #             # self.sock.sendall("a drive_direct(-100,100)".encode())
+            #             # self.sock.recv(128).decode()
+            #             # sleep(.5)
+            #             self.direction = not self.direction
+            #         else:
+            #             self.sock.sendall("a drive_straight(50)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(3.5)
+            #             self.sock.sendall("a drive_direct(-100,100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(1.5)
+            #             self.sock.sendall("a drive_direct(200,100)".encode())
+            #             self.sock.recv(128).decode()
+            #             sleep(16)
+            #             # self.sock.sendall("a drive_direct(-100,100)".encode())
+            #             # self.sock.recv(128).decode()
+            #             # sleep(.5)
+            #             self.direction = not self.direction
+            #
+            #     if self.STATE == States.ABOVE:
+            #         # forward
+            #         self.sock.sendall("a drive_straight(50)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #     if self.STATE == States.CENTER:
+            #         self.sock.sendall("a drive_straight(50)".encode())
+            #         self.sock.recv(128).decode()
+            #     if self.STATE == States.BELOW_RIGHT:
+            #         self.sock.sendall("a spin_right(15)".encode())
+            #         self.sock.recv(128).decode()
+            #
+            #         # with socketLock:
+            #         #     self.direction = not self.direction
+            #
+            #     if self.STATE == States.BELOW_LEFT:
+            #         self.sock.sendall("a spin_left(15)".encode())
+            #         self.sock.recv(128).decode()
 
                     # with socketLock:
                     #     self.direction = not self.direction
 
-                if self.STATE == States.BELOW_LEFT:
-                    self.sock.sendall("a spin_left(15)".encode())
-                    self.sock.recv(128).decode()
-
-                    # with socketLock:
-                    #     self.direction = not self.direction
-
-                self.STATE = States.LISTEN
-            else:
-                if self.STATE == States.LISTEN:
-                    if (video.centerY == -1 or video.centerX == -1):
-                        self.STATE = States.NO
-                    else:
-                        if (self.threshY) <= video.centerY and (self.threshY * 2) >= video.centerY:
-                            if (self.threshX) >= video.centerX:
-                                self.STATE = States.LEFT
-                            elif (self.threshX * 2) <= video.centerX:
-                                self.STATE = States.RIGHT
-                            else:
-                                self.STATE = States.CENTER
-                                # print(self.video.radius)
-                                if (self.video.radius > 70):
-                                    self.STATE = States.BELOW
-                        elif (self.threshY) <= video.centerY:
-                            if (self.threshX) >= video.centerX:
-                                self.STATE = States.BELOW_LEFT
-                            elif (self.threshX * 2) <= video.centerX:
-                                self.STATE = States.BELOW_RIGHT
-                            else:
-                                self.STATE = States.BELOW
-                        elif (self.threshY * 2) >= video.centerY:
-                            self.STATE = States.ABOVE
-
-                # TODO: Work here
-                print(self.STATE)
-                if self.STATE == States.NO:
-                    # spin around and look for it
-                    if self.direction:
-                        self.sock.sendall("a spin_right(25)".encode())
-                        self.sock.recv(128).decode()
-                    else:
-                        self.sock.sendall("a spin_left(25)".encode())
-                        self.sock.recv(128).decode()
-
-                    # pass
-                if self.STATE == States.RIGHT:
-                    self.sock.sendall("a spin_right(20)".encode())
-                    self.sock.recv(128).decode()
-                if self.STATE == States.LEFT:
-                    self.sock.sendall("a spin_left(20)".encode())
-                    self.sock.recv(128).decode()
-
-                if self.STATE == States.BELOW:
-                    # go left around it (cone is to right)
-                    if (self.begin):
-                        self.sock.sendall("a drive_straight(50)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(3.5)
-                        self.sock.sendall("a drive_direct(100,-100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(1.5)
-                        self.sock.sendall("a drive_direct(60,100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(8.5)
-                        # self.sock.sendall("a drive_direct(100,-100)".encode())
-                        # self.sock.recv(128).decode()
-                        # sleep(.5)
-                        self.begin = False
-                        self.direction = not self.direction
-                    elif (self.direction):
-                        self.sock.sendall("a drive_straight(50)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(3.5)
-                        self.sock.sendall("a drive_direct(100,-100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(1.5)
-                        self.sock.sendall("a drive_direct(100,200)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(16)
-                        # self.sock.sendall("a drive_direct(-100,100)".encode())
-                        # self.sock.recv(128).decode()
-                        # sleep(.5)
-                        self.direction = not self.direction
-                    else:
-                        self.sock.sendall("a drive_straight(50)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(3.5)
-                        self.sock.sendall("a drive_direct(-100,100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(1.5)
-                        self.sock.sendall("a drive_direct(200,100)".encode())
-                        self.sock.recv(128).decode()
-                        sleep(16)
-                        # self.sock.sendall("a drive_direct(-100,100)".encode())
-                        # self.sock.recv(128).decode()
-                        # sleep(.5)
-                        self.direction = not self.direction
-
-                if self.STATE == States.ABOVE:
-                    # forward
-                    self.sock.sendall("a drive_straight(50)".encode())
-                    self.sock.recv(128).decode()
-
-                if self.STATE == States.CENTER:
-                    self.sock.sendall("a drive_straight(50)".encode())
-                    self.sock.recv(128).decode()
-                if self.STATE == States.BELOW_RIGHT:
-                    self.sock.sendall("a spin_right(15)".encode())
-                    self.sock.recv(128).decode()
-
-                    # with socketLock:
-                    #     self.direction = not self.direction
-
-                if self.STATE == States.BELOW_LEFT:
-                    self.sock.sendall("a spin_left(15)".encode())
-                    self.sock.recv(128).decode()
-
-                    # with socketLock:
-                    #     self.direction = not self.direction
-
-                self.STATE = States.LISTEN
+        self.STATE = States.LISTEN
 
 
         # END OF CONTROL LOOP
@@ -492,6 +493,8 @@ class ImageProc(threading.Thread):
         #ADDED
         self.cam = cv2.VideoCapture(0)
 
+
+
     def run(self):
         url = "http://" + self.IP_ADDRESS + ":" + str(self.PORT)
         #stream = urllib.request.urlopen(url)
@@ -556,6 +559,8 @@ class ImageProc(threading.Thread):
             self.centerY = -1
         self.backX = int(centroids[0][0])
         self.backY = int(centroids[0][1])
+        with imageLock:
+            cv2.circle(self.latestImg, (self.centerX, self.centerY), 60, (255, 0, 255), 1)
 
         # test with width and height
         # self.backX = stats[0, cv2.CC_STAT_WIDTH]
@@ -565,6 +570,11 @@ class ImageProc(threading.Thread):
         # return cv2.bitwise_and(self.latestImg, self.latestImg, mask=theMask)
         # return cv2.bitwise_and(hsvImage, hsvImage, mask=hsvMask)
         return dilatedImage
+    def click(self, event, x, y, flags, params):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.centerX = x
+            self.centerY = y
+            self.wasClicked = True
 
 
 # END OF IMAGEPROC
@@ -596,6 +606,7 @@ if __name__ == "__main__":
                        lambda x: sm.video.setThresh('low_val', x))
     cv2.createTrackbar('high_val', 'sliders', sm.video.thresholds['high_val'], 255,
                        lambda x: sm.video.setThresh('high_val', x))
+    cv2.setMouseCallback("Create View", sm.video.click, sm.video)
 
     while len(sm.video.latestImg) == 0 or len(sm.video.feedback) == 0:
         sleep(1)
