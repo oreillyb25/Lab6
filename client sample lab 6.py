@@ -35,7 +35,8 @@ class States(enum.Enum):
     BELOW_LEFT = enum.auto()
     NO = enum.auto()
     DONE = enum.auto()
-    CLICK = enum.auto()
+    SPIN = enum.auto()
+    DRIVE = enum.auto()
 
 
 class StateMachine(threading.Thread):
@@ -68,6 +69,9 @@ class StateMachine(threading.Thread):
 
         self.robotAngle = -1
         self.clickAngle = -1
+
+        self.counter = 0
+        self.spinCounter = 0
 
         # default option in which the robot goes towards an object (colors must be set manually)
         self.option = 1
@@ -112,11 +116,51 @@ class StateMachine(threading.Thread):
                 if video.wasClicked:
                     self.initialX = video.robotCenterX
                     self.initialY = video.robotCenterY
-                    self.STATE = States.CLICK
-            if self.STATE == States.CLICK:
+                    self.STATE = States.SPIN
+                    initLength = math.hypot(video.robotCenterY - self.initialY, video.robotCenterX - self.initialX)
+            if self.STATE == States.SPIN:
+                self.sock.sendall("a spin_left(50)".encode())
+                self.sock.recv(128).decode()
+                sleep(.5)
+                self.sock.sendall("a spin_left(0)".encode())
+                self.sock.recv(128).decode()
+
+                length = math.hypot(video.robotCenterY - video.centerY, video.robotCenterX - video.centerX)
+                if (length < 0):
+                    if length > initLength:
+                        initLength = length
+                        self.counter = self.counter + .5
+                else:
+                    if (length < initLength):
+                        initLength = length
+                        self.counter = self.counter + .5
+                self.spinCounter = self.spinCounter + 1
+
+                if (self.spinCounter == 26):
+                    self.sock.sendall("a spin_left(50)".encode())
+                    self.sock.recv(128).decode()
+                    sleep(self.counter)
+                    self.STATE = States.DRIVE
+            if self.STATE == States.DRIVE:
+                self.sock.sendall("a drive_straight(50)".encode())
+                self.sock.recv(128).decode()
+
+                if (video.robotCenterX - 20 > video.centerX and video.robotCenterX + 20 < video.centerX):
+                    if (video.robotCenterY - 20 > video.centerY and video.robotCenterY + 20 < video.centerY):
+                        self.STATE = States.DONE
+            if self.STATE == States.DONE:
+                self.sock.sendall("a drive_straight(0)".encode())
+                self.sock.recv(128).decode()
+                sleep(50)
+
+
+
+                """
                 self.sock.sendall("a drive_straight(50)".encode())
                 self.sock.recv(128).decode()
                 sleep(1)
+                self.sock.sendall("a drive_straight(0)".encode())
+                self.sock.recv(128).decode()
                 self.newX = video.robotCenterX
                 self.newY = video.robotCenterY
                 self.robotAngle = math.atan2((self.newY-self.initialY), (self.newX - self.initialX))
@@ -124,6 +168,7 @@ class StateMachine(threading.Thread):
                 print(self.clickAngle)
                 print(self.robotAngle)
                 video.wasClicked = False
+                """
             self.STATE = States.LISTEN
 
 
@@ -286,6 +331,9 @@ class ImageProc(threading.Thread):
             img = cv2.resize(img, ((int)(len(img[0]) / RESIZE_SCALE), (int)(len(img) / RESIZE_SCALE)))
             """
             retValue, img = self.cam.read()
+            """if not img:
+                sleep(1)
+                continue"""
             with imageLock:
                 self.latestImg = copy.deepcopy(img)  # Make a copy not a reference
 
@@ -385,7 +433,7 @@ if __name__ == "__main__":
                        lambda x: sm.video.setThresh('high_val', x))
     cv2.setMouseCallback("Create View", sm.video.click, sm.video)
 
-    while len(sm.video.latestImg) == 0 or len(sm.video.feedback) == 0:
+    while (len(sm.video.latestImg) == 0) or (len(sm.video.feedback) == 0):
         sleep(1)
 
     while (sm.RUNNING):
@@ -393,7 +441,7 @@ if __name__ == "__main__":
             cv2.imshow("Create View", sm.video.latestImg)
             cv2.imshow("sliders", sm.video.feedback)
         cv2.waitKey(5)
-
+    sm.video.cam.release()
     cv2.destroyAllWindows()
 
     sleep(1)
