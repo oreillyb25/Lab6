@@ -70,7 +70,7 @@ class StateMachine(threading.Thread):
         self.robotAngle = -1
         self.clickAngle = -1
 
-        self.counter = 0
+        self.counter = 0.0
         self.spinCounter = 0
 
         # default option in which the robot goes towards an object (colors must be set manually)
@@ -117,7 +117,7 @@ class StateMachine(threading.Thread):
                     self.initialX = video.robotCenterX
                     self.initialY = video.robotCenterY
                     self.STATE = States.SPIN
-                    initLength = math.hypot(video.robotCenterY - self.initialY, video.robotCenterX - self.initialX)
+                    initLength = abs(math.hypot(video.robotCenterY - video.centerY, video.robotCenterX - video.centerX))
             if self.STATE == States.SPIN:
                 self.sock.sendall("a spin_left(50)".encode())
                 self.sock.recv(128).decode()
@@ -125,21 +125,16 @@ class StateMachine(threading.Thread):
                 self.sock.sendall("a spin_left(0)".encode())
                 self.sock.recv(128).decode()
 
-                length = math.hypot(video.robotCenterY - video.centerY, video.robotCenterX - video.centerX)
-                if (length < 0):
-                    if length > initLength:
-                        initLength = length
-                        self.counter = self.counter + .5
-                else:
-                    if (length < initLength):
-                        initLength = length
-                        self.counter = self.counter + .5
+                length = abs(math.hypot(video.robotCenterY - video.centerY, video.robotCenterX - video.centerX))
+                if (length < initLength):
+                    initLength = length
+                    self.counter = self.spinCounter
                 self.spinCounter = self.spinCounter + 1
 
-                if (self.spinCounter == 26):
+                if self.spinCounter >= 26:
                     self.sock.sendall("a spin_left(50)".encode())
                     self.sock.recv(128).decode()
-                    sleep(self.counter)
+                    sleep(self.counter/2)
                     self.STATE = States.DRIVE
             if self.STATE == States.DRIVE:
                 self.sock.sendall("a drive_straight(50)".encode())
@@ -169,7 +164,6 @@ class StateMachine(threading.Thread):
                 print(self.robotAngle)
                 video.wasClicked = False
                 """
-            self.STATE = States.LISTEN
 
 
 
