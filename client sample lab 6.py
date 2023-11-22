@@ -128,7 +128,10 @@ class StateMachine(threading.Thread):
                 length = abs(math.hypot(video.robotCenterY - video.centerY, video.robotCenterX - video.centerX))
                 if (length < initLength):
                     initLength = length
-                    self.counter = self.spinCounter
+                    self.counter = self.spinCounter - 1.5
+                    if self.counter < 0:
+                        self.counter = self.counter + 26
+                    print(self.counter)
                 self.spinCounter = self.spinCounter + 1
 
                 if self.spinCounter >= 26:
@@ -139,11 +142,12 @@ class StateMachine(threading.Thread):
             if self.STATE == States.DRIVE:
                 self.sock.sendall("a drive_straight(50)".encode())
                 self.sock.recv(128).decode()
-
-                if (video.robotCenterX - 20 > video.centerX and video.robotCenterX + 20 < video.centerX):
-                    if (video.robotCenterY - 20 > video.centerY and video.robotCenterY + 20 < video.centerY):
-                        self.STATE = States.DONE
+                length = abs(math.hypot(video.robotCenterY - video.centerY, video.robotCenterX - video.centerX))
+                print(length)
+                if length < 50:
+                    self.STATE = States.DONE
             if self.STATE == States.DONE:
+                print("done")
                 self.sock.sendall("a drive_straight(0)".encode())
                 self.sock.recv(128).decode()
                 sleep(50)
@@ -352,8 +356,8 @@ class ImageProc(threading.Thread):
         colorImage = cv2.cvtColor(updatedImage, cv2.COLOR_HSV2RGB)
         bwImage = cv2.cvtColor(colorImage, cv2.COLOR_RGB2GRAY)
         kernel = numpy.ones((3, 3), numpy.uint8)
-        erodedImage = cv2.erode(bwImage, kernel, iterations=1)
-        dilatedImage = cv2.dilate(erodedImage, kernel, iterations=1)
+        erodedImage = cv2.erode(bwImage, kernel, iterations=2)
+        dilatedImage = cv2.dilate(erodedImage, kernel, iterations=4)
         numlabels, labels, stats, centroids = cv2.connectedComponentsWithStats(dilatedImage)
         try:
             self.robotLeft = int(stats[1, cv2.CC_STAT_LEFT])
